@@ -226,7 +226,7 @@ for f in coroutine.wrap(scan), './libs' do
 			initClass(s, comments[i])
 		elseif t == 'param' or t == 'return' then
 			local method = matchMethod(s, comments[i])
-			for k, v in pairs(class.methodTags) do
+			for k, v in pairs(class.methodTags or {}) do
 				method.tags[k] = v
 			end
 			method.class = class
@@ -276,7 +276,7 @@ local function writeProperties(f, properties)
 	f:write('| Name | Type | Description |\n')
 	f:write('|-|-|-|\n')
 	for _, v in ipairs(properties) do
-		f:write('| ', v.name, ' | ', link(v.type), ' | ', v.desc, ' |\n')
+		f:write('| ', v.name, ' | ', link(v.type), ' | ', v.desc:gsub("\r", ""), ' |\n')
 	end
 	f:write('\n')
 end

@@ -41,6 +41,8 @@ local function checkMode(modes)
 	end
 end
 
+---@class VoiceSocket
+---<!tag:patch>
 local VoiceSocket = classes.VoiceSocket
 
 ---Handles disconnecting/reconnecting to the voice server.
@@ -59,7 +61,7 @@ function VoiceSocket:handleDisconnect()
 end
 
 ---Handles the WebSocket payloads.
----@param payload {d: table, op: integer} The payload.
+---@param payload table The payload.
 function VoiceSocket:handlePayload(payload)
 
 	local manager = self._manager

@@ -56,6 +56,7 @@ end
 
 ---Sets the user's speaking status.
 ---@param ssrc? number
+---<!tag:mem>
 function VoiceUser:setSpeaking(ssrc)
     self._audioSSRC = ssrc or self._audioSSRC
 
@@ -80,6 +81,7 @@ end
 
 ---Subscribes to the user's audio stream.
 ---@return boolean success Whether the user was successfully subscribed to.
+---<!tag:mem>
 function VoiceUser:subscribe()
     if self._subscribed then return true end
 
@@ -94,6 +96,7 @@ end
 
 ---Unsubscribes from the user's audio stream.
 ---@return boolean success Whether the user was successfully unsubscribed from.
+---<!tag:mem>
 function VoiceUser:unsubscribe()
     self._subscribed = false
     self._decoder = nil
@@ -108,7 +111,8 @@ end
 ---Disconnects the user from the map.
 ---If you're looking to disconnect a user from the channel, use `Member:setVoiceChannel(nil)`.
 ---@return boolean success Whether the user was found and disconnected.
----@return 'User not found'|nil errorMessage The error message if the user was not found.
+---@return string|nil errorMessage The error message if the user was not found.
+---<!tag:mem>
 function VoiceUser:disconnect()
     return self._parent:disconnect(self._id)
 end

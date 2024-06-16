@@ -15,7 +15,6 @@ local VoiceUser = require('containers/VoiceUser')
 ---@field connection VoiceConnection The voice connection.
 ---@field channel VoiceChannel The voice channel.
 ---@field me VoiceUser The client's user in the channel.
----@field _users table<number, VoiceUser> The users in the channel.
 local VoiceUserMap, get = class('VoiceUserMap', Container, Emitter, Iterable)
 
 function VoiceUserMap:__init(connection)
@@ -53,7 +52,8 @@ end
 ---If you're looking to disconnect a user from the channel, use `Member:setVoiceChannel(nil)`.
 ---@param user VoiceUser|table|string
 ---@return boolean success Whether the user was found and disconnected.
----@return 'User not found'|nil errorMessage The error message if the user was not found.
+---@return string|nil errorMessage The error message if the user was not found.
+---<!tag:mem>
 function VoiceUserMap:disconnect(user)
     local userId = type(user) == 'table' and user.id or user
     local voiceUser = self:get(userId)
@@ -77,7 +77,8 @@ end
 ---Subscribes to a user in the map to start processing their audio stream.
 ---@param userIdOrAudioSSRC string|number
 ---@return VoiceUser|nil TargetUser
----@return 'User not found'|nil ErrorMessage
+---@return string|nil ErrorMessage
+---<!tag:mem>
 function VoiceUserMap:subscribe(userIdOrAudioSSRC)
     if type(userIdOrAudioSSRC) == 'table' then
         userIdOrAudioSSRC = userIdOrAudioSSRC.id
@@ -97,7 +98,8 @@ end
 ---Unsubscribes from a user in the map to stop processing their audio stream.
 ---@param userIdOrAudioSSRC string|number
 ---@return VoiceUser|nil
----@return 'User not found'|nil
+---@return string|nil
+---<!tag:mem>
 function VoiceUserMap:unsubscribe(userIdOrAudioSSRC)
     if type(userIdOrAudioSSRC) == 'table' then
         userIdOrAudioSSRC = userIdOrAudioSSRC.id
@@ -115,6 +117,7 @@ function VoiceUserMap:unsubscribe(userIdOrAudioSSRC)
 end
 
 ---Subscribes to all users in the channel.
+---<!tag:mem>
 function VoiceUserMap:subscribeAll()
     self:forEach(function(voiceUser)
         voiceUser:subscribe()
@@ -122,6 +125,7 @@ function VoiceUserMap:subscribeAll()
 end
 
 ---Unsubscribes from all users in the channel.
+---<!tag:mem>
 function VoiceUserMap:unsubscribeAll()
     self:forEach(function(voiceUser)
         voiceUser:unsubscribe()

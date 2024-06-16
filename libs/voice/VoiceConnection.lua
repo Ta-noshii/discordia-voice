@@ -42,6 +42,9 @@ local ffi_string = ffi.string
 local format, unpack = string.format, string.unpack -- luacheck: ignore
 local wrap = coroutine.wrap
 
+---@class VoiceConnection
+---@field map VoiceUserMap The VoiceUserMap for this connection.
+---<!tag:patch>
 local VoiceConnection = classes.VoiceConnection
 local get = VoiceConnection.__getters
 
@@ -78,6 +81,8 @@ function VoiceConnection:_prepare(key, socket)
 
 end
 
+---The function that handles the UDP packets received by the voice connection.
+---@param packet string The UDP packet received by the voice connection.
 function VoiceConnection:onUDPPacket(packet)
 	local warning, _error = function(...) -- hoping to remove this after debugging
 		self._socket:warning(...)
@@ -173,7 +178,6 @@ function VoiceConnection:onUDPPacket(packet)
 	end)()
 end
 
---[=[@p map VoiceUserMap The VoiceUserMap for this connection.]=]
 function get.map(self)
 	return self._map
 end
