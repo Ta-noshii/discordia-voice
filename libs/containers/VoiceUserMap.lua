@@ -117,7 +117,7 @@ function get.channel(self)
 end
 
 function get.me(self)
-    return self:get(self._channel._client._user._id)
+	return self:get(self._channel.client._user._id)
 end
 
 return VoiceUserMap
