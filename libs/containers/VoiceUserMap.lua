@@ -48,7 +48,7 @@ function VoiceUserMap:disconnect(user)
     local voiceUser = self:get(userId)
     if voiceUser then
         voiceUser:unsubscribe()
-        self:emit('delete', voiceUser)
+        self:emit('leave', voiceUser)
         for i in ipairs(self._users) do
             if self._users[i] == voiceUser then
                 table.remove(self._users, i)
