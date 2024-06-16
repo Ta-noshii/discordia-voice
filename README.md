@@ -3,7 +3,7 @@ This is a [Discordia](https://github.com/SinisterRectus/Discordia) discord bot e
 The requirements are to be using [luvit](https://github.com/luvit/luvit) and [Discordia](https://github.com/SinisterRectus/Discordia).
 
 ## Installation:
-1. Make sure you are in the root directory of your discordia bot.
+1. Make sure you are in the root directory of your discordia bot using `cd`.
 2. Run:
 ```bash
 git clone https://github.com/Ta-noshii/discordia-voice.git ./deps/discordia-voice

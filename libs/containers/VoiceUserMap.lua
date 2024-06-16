@@ -9,6 +9,13 @@ local Emitter = classes.Emitter
 
 local VoiceUser = require('containers/VoiceUser')
 
+---@class VoiceUserMap : Container, Emitter, Iterable
+---Represents a map of users in a voice channel.
+---@field id string The channel's ID.
+---@field connection VoiceConnection The voice connection.
+---@field channel VoiceChannel The voice channel.
+---@field me VoiceUser The client's user in the channel.
+---@field _users table<number, VoiceUser> The users in the channel.
 local VoiceUserMap, get = class('VoiceUserMap', Container, Emitter, Iterable)
 
 function VoiceUserMap:__init(connection)
@@ -35,17 +42,22 @@ function VoiceUserMap:iter()
 end
 
 function VoiceUserMap:_insert(data)
-    member = VoiceUser(self, data)
-    table.insert(self._users, member)
-    self:emit('join', member)
+    local voiceUser = VoiceUser(self, data)
+    table.insert(self._users, voiceUser)
+    self:emit('join', voiceUser)
 
-    return member
+    return voiceUser
 end
 
+---Removes a user from the map.
+---If you're looking to disconnect a user from the channel, use `Member:setVoiceChannel(nil)`.
+---@param user VoiceUser|table|string
+---@return boolean success Whether the user was found and disconnected.
+---@return 'User not found'|nil errorMessage The error message if the user was not found.
 function VoiceUserMap:disconnect(user)
     local userId = type(user) == 'table' and user.id or user
-
     local voiceUser = self:get(userId)
+
     if voiceUser then
         voiceUser:unsubscribe()
         self:emit('leave', voiceUser)
@@ -56,17 +68,23 @@ function VoiceUserMap:disconnect(user)
             end
         end
     else
-        return nil, 'User not found'
+        return false, 'User not found'
     end
+
+	return true
 end
 
+---Subscribes to a user in the map to start processing their audio stream.
+---@param userIdOrAudioSSRC string|number
+---@return VoiceUser|nil TargetUser
+---@return 'User not found'|nil ErrorMessage
 function VoiceUserMap:subscribe(userIdOrAudioSSRC)
     if type(userIdOrAudioSSRC) == 'table' then
         userIdOrAudioSSRC = userIdOrAudioSSRC.id
     end
 
-    local voiceUser = self:find(function()
-        return member.id == userIdOrAudioSSRC or member.audioSSRC == userIdOrAudioSSRC
+    local voiceUser = self:find(function(voiceUser)
+        return voiceUser.id == userIdOrAudioSSRC or voiceUser.audioSSRC == userIdOrAudioSSRC
     end)
 
     if voiceUser then
@@ -76,13 +94,17 @@ function VoiceUserMap:subscribe(userIdOrAudioSSRC)
     end
 end
 
+---Unsubscribes from a user in the map to stop processing their audio stream.
+---@param userIdOrAudioSSRC string|number
+---@return VoiceUser|nil
+---@return 'User not found'|nil
 function VoiceUserMap:unsubscribe(userIdOrAudioSSRC)
     if type(userIdOrAudioSSRC) == 'table' then
         userIdOrAudioSSRC = userIdOrAudioSSRC.id
     end
 
-    local voiceUser = self:find(function()
-        return member.id == userIdOrAudioSSRC or member.audioSSRC == userIdOrAudioSSRC
+    local voiceUser = self:find(function(voiceUser)
+        return voiceUser.id == userIdOrAudioSSRC or voiceUser.audioSSRC == userIdOrAudioSSRC
     end)
 
     if voiceUser then
@@ -92,15 +114,17 @@ function VoiceUserMap:unsubscribe(userIdOrAudioSSRC)
     end
 end
 
+---Subscribes to all users in the channel.
 function VoiceUserMap:subscribeAll()
-    self:forEach(function(user)
-        user:subscribe()
+    self:forEach(function(voiceUser)
+        voiceUser:subscribe()
     end)
 end
 
+---Unsubscribes from all users in the channel.
 function VoiceUserMap:unsubscribeAll()
-    self:forEach(function(user)
-        user:unsubscribe()
+    self:forEach(function(voiceUser)
+        voiceUser:unsubscribe()
     end)
 end
 

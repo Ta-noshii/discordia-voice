@@ -9,7 +9,22 @@ local Container = classes.Container
 
 local opus = require('discordia/libs/voice/opus')
 
-local VoiceUser, get, set = class('VoiceUser', Emitter, Container)
+---@class VoiceUser
+---Represents a user in a VoiceUserMap.
+---@field id string The user's ID.
+---@field user User The user object.
+---@field member Member The member object.
+---@field flags number The user's flags.
+---@field platform? number|nil Corresponds to enums.platformType.
+---@field audioSSRC number The user's audio SSRC.
+---@field videoSSRC? number The user's video SSRC.
+---@field speaking boolean Whether the user is speaking.
+---@field subscribed boolean Whether the user is subscribed to the audio stream.
+---@field decoder? OpusDecoder The user's Opus decoder.
+---@field connection VoiceConnection The voice connection.
+---@field lastSequence? number The last sequence number received.
+---@field map VoiceUserMap The map the user is in.
+local VoiceUser, get = class('VoiceUser', Emitter, Container)
 
 local SPEECH_TIMEOUT = 1000 -- ms
 local SAMPLE_RATE = 48000
@@ -32,13 +47,15 @@ function VoiceUser:__init(map, data)
     Emitter.__init(self)
 
     self._connection = map._connection
-    self._member = map._connection._channel._parent:getMember(data.user_id)
+    self._member = map._connection._channel._parent:getMember(data.user_id) -- switch to relying on user?
 end
 
 function VoiceUser:__hash()
     return self._id
 end
 
+---Sets the user's speaking status.
+---@param ssrc? number
 function VoiceUser:setSpeaking(ssrc)
     self._audioSSRC = ssrc or self._audioSSRC
 
@@ -61,6 +78,8 @@ function VoiceUser:setSpeaking(ssrc)
     end
 end
 
+---Subscribes to the user's audio stream.
+---@return boolean success Whether the user was successfully subscribed to.
 function VoiceUser:subscribe()
     if self._subscribed then return true end
 
@@ -73,6 +92,8 @@ function VoiceUser:subscribe()
     return true
 end
 
+---Unsubscribes from the user's audio stream.
+---@return boolean success Whether the user was successfully unsubscribed from.
 function VoiceUser:unsubscribe()
     self._subscribed = false
     self._decoder = nil
@@ -80,9 +101,14 @@ function VoiceUser:unsubscribe()
 
     self:emit('speaking', false)
     self:removeAllListeners()
+
     return true
 end
 
+---Disconnects the user from the map.
+---If you're looking to disconnect a user from the channel, use `Member:setVoiceChannel(nil)`.
+---@return boolean success Whether the user was found and disconnected.
+---@return 'User not found'|nil errorMessage The error message if the user was not found.
 function VoiceUser:disconnect()
     return self._parent:disconnect(self._id)
 end

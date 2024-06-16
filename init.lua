@@ -10,17 +10,13 @@ do
 end
 
 do
+---@class Member
+---@field voiceUser VoiceUser|nil The voice user object for this member, if they are in your voice channel.
+---<!tag:patch>
 	local oldMember = discordia.class.classes.Member
 	oldMember.__getters.voiceUser = function(self)
 		return self._guild._connection
 	end
 end
-
-discordia.voice = {
-	VoiceConnection = require("voice/VoiceConnection"),
-	VoiceSocket = require("voice/VoiceSocket"),
-	VoiceUser = require("containers/VoiceUser"),
-	VoiceUserMap = require("containers/VoiceUserMap")
-}
 
 return discordia.voice

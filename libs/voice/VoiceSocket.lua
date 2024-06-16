@@ -6,15 +6,9 @@ local discordia = require("discordia")
 local class = discordia.class
 local classes = class.classes
 
-local enums = discordia.enums
-
 local sodium = require('discordia/libs/voice/sodium')
 
-local logLevel = assert(enums.logLevel)
-local format = string.format
-local setInterval, clearInterval = timer.setInterval, timer.clearInterval
 local wrap = coroutine.wrap
-local time = os.time
 local unpack, pack = string.unpack, string.pack -- luacheck: ignore
 
 local ENCRYPTION_MODE = 'xsalsa20_poly1305'
@@ -49,6 +43,7 @@ end
 
 local VoiceSocket = classes.VoiceSocket
 
+---Handles disconnecting/reconnecting to the voice server.
 function VoiceSocket:handleDisconnect()
 	-- reconnecting and resuming
 	local newChannelId = self._state and self._state.channel_id or nil
@@ -63,6 +58,8 @@ function VoiceSocket:handleDisconnect()
 	end
 end
 
+---Handles the WebSocket payloads.
+---@param payload {d: table, op: integer} The payload.
 function VoiceSocket:handlePayload(payload)
 
 	local manager = self._manager
@@ -168,6 +165,10 @@ function VoiceSocket:handlePayload(payload)
 
 end
 
+---Handles the WebSocket handshake.
+---@param server_ip string The server IP.
+---@param server_port number The server port.
+---@return uv_udp_send_t|nil send The UDP send handle.
 function VoiceSocket:handshake(server_ip, server_port)
 	local udp = uv.new_udp()
 	self._udp = udp
