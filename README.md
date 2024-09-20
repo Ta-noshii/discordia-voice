@@ -1,6 +1,6 @@
 ## Introduction:
-This is a [Discordia](https://github.com/SinisterRectus/Discordia) discord bot extension to help with voice receiving and handling.
-The requirements are to be using [luvit](https://github.com/luvit/luvit) and [Discordia](https://github.com/SinisterRectus/Discordia).
+This is a [Discordia](https://github.com/SinisterRectus/Discordia) discord bot extension that introduces *Voice Receiving* and extended functionality for *Voice Calls*.
+The requirements to use this extension are [luvit](https://github.com/luvit/luvit) and [Discordia](https://github.com/SinisterRectus/Discordia).
 
 ## Installation:
 1. Make sure you are in the root directory of your discordia bot using `cd`.
@@ -19,6 +19,6 @@ And you're done!
 TODO, a few examples are listed [here](https://github.com/Ta-noshii/discordia-voice-plus/tree/master/examples).
 
 ## Special thanks:
-[@truemedian](https://github.com/truemedian) for helping me write this and answering my questions to figure out discord's API.
-[@MeteorTheLizard](https://github.com/MeteorTheLizard) for testing & reporting issues.
+[@truemedian](https://github.com/truemedian) for helping me write this and providing extensive help with discord's API.  
+[@MeteorTheLizard](https://github.com/MeteorTheLizard) for testing & reporting issues.  
 [@wozeparrot](https://github.com/wozeparrot) for helping with figuring out the decoding.
