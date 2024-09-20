@@ -11,7 +11,6 @@ local VoiceUserMap = require('containers/VoiceUserMap')
 
 local ffi = require('ffi')
 local constants = require('discordia/libs/constants')
-local opus = require('discordia/libs/voice/opus') or {}
 
 local CHANNELS = 2
 local SAMPLE_RATE = 48000 -- Hz
@@ -21,8 +20,6 @@ local MS_PER_S = constants.MS_PER_S
 
 local FRAME_SIZE = SAMPLE_RATE * FRAME_DURATION / MS_PER_S -- 960
 local MAX_FRAME_SIZE = FRAME_SIZE * CHANNELS * 2 -- 3840
-
-local decoder = opus.Decoder(SAMPLE_RATE, CHANNELS)
 
 local ffi_string = ffi.string
 local unpack = string.unpack -- luacheck: ignore
@@ -66,7 +63,7 @@ function VoiceConnection:onAudioPacket(packet)
 	local message, sequence, timestamp, ssrc = self:_parseAudioPacket(packet, self._key)
 
 	if message then -- opus decode
-		local success, pcm = pcall(decoder.decode, decoder, message, #message, FRAME_SIZE, MAX_FRAME_SIZE)
+		local success, pcm = pcall(voiceUser.decoder.decode, decoder, message, #message, FRAME_SIZE, MAX_FRAME_SIZE)
 
 		if not success then
 			return socket:error('Opus decode failed: %s', pcm) -- error message
