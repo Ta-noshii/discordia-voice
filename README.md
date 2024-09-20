@@ -6,17 +6,17 @@ The requirements are to be using [luvit](https://github.com/luvit/luvit) and [Di
 1. Make sure you are in the root directory of your discordia bot using `cd`.
 2. Run:
 ```bash
-git clone https://github.com/Ta-noshii/discordia-voice.git ./deps/discordia-voice
+git clone https://github.com/Ta-noshii/discordia-voice-plus.git ./deps/discordia-voice-plus
 ```
-3. Ensure the existence of the discordia-voice folder in your `deps` folder.
+3. Ensure the existence of the discordia-voice-plus folder in your `deps` folder.
 4. Require the module in your main script as such:
 ```lua
-require("discordia-voice")
+require("discordia-voice-plus")
 ```
 And you're done!
 
 ## Usage:
-TODO, a few examples are listed [here](https://github.com/Ta-noshii/discordia-voice/tree/master/examples).
+TODO, a few examples are listed [here](https://github.com/Ta-noshii/discordia-voice-plus/tree/master/examples).
 
 ## Special thanks:
 [@truemedian](https://github.com/truemedian) for helping me write this and answering my questions to figure out discord's API.
