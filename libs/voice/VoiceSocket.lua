@@ -1,17 +1,12 @@
 ---@diagnostic disable: different-requires
 local uv = require('uv')
-local timer = require('timer')
 
 local discordia = require("discordia")
 local class = discordia.class
 local classes = class.classes
 
-local sodium = require('discordia/libs/voice/sodium')
-
 local wrap = coroutine.wrap
 local unpack, pack = string.unpack, string.pack -- luacheck: ignore
-
-local ENCRYPTION_MODE = 'xsalsa20_poly1305'
 
 local CHANNELS, BIT_DEPTH, SAMPLE_RATE, MS_PER_S = 2, 16, 48000, 1000
 local PCM_SILENCE = string.rep("\0", SAMPLE_RATE * CHANNELS * (BIT_DEPTH / 8) / MS_PER_S)
@@ -26,20 +21,13 @@ local HEARTBEAT_ACK      = 6
 local RESUME             = 7
 local HELLO              = 8
 local RESUMED            = 9
+local CHANNEL_USERS      = 11
 local NEW_CLIENT_CONNECT = 12
 local CLIENT_DISCONNECT  = 13
 -- 15 recv {"op":15,"d":{"any":100}}
--- 16 recv {"op":16,"d":{}} send: {"op":16,"d":{"voice":"0.10.0","rtc_worker":"0.4.0"}}
+local REQUEST_VERSIONS   = 16
 local CLIENT_FLAGS       = 18
 local CLIENT_PLATFORM    = 20
-
-local function checkMode(modes)
-	for _, mode in ipairs(modes) do
-		if mode == ENCRYPTION_MODE then
-			return mode
-		end
-	end
-end
 
 ---@class VoiceSocket
 ---<!tag:patch>
@@ -47,6 +35,7 @@ local VoiceSocket = classes.VoiceSocket
 
 ---Handles disconnecting/reconnecting to the voice server.
 function VoiceSocket:handleDisconnect()
+
 	-- reconnecting and resuming
 	local newChannelId = self._state and self._state.channel_id or nil
 	local oldChannelId = self._connection._channel_id or nil
@@ -58,48 +47,21 @@ function VoiceSocket:handleDisconnect()
 		self:info('Disconnected')
 		self._connection:_cleanup()
 	end
+
 end
 
+local originalHandlePayload = VoiceSocket.handlePayload
 ---Handles the WebSocket payloads.
 ---@param payload table The payload.
 function VoiceSocket:handlePayload(payload)
 
-	local manager = self._manager
 	local connection = self._connection
 	local map = connection._map
 
 	local d = payload.d
 	local op = payload.op
 
-	self:debug('WebSocket OP %s', op)
-
-	if op == HELLO then
-
-		self:info('Received HELLO')
-		self:startHeartbeat(d.heartbeat_interval * 0.75) -- NOTE: hotfix for API bug
-		self:identify()
-
-	elseif op == READY then
-
-		self:info('Received READY')
-		local mode = checkMode(d.modes)
-		if mode then
-			self._mode = mode
-			self._ssrc = d.ssrc
-			self._nonce = sodium.nonce()
-
-			-- we keep nonce in connection
-			self:handshake(d.ip, d.port)
-		else
-			self:error('No supported encryption mode available')
-			self:disconnect()
-		end
-
-	elseif op == RESUMED then
-
-		self:info('Received RESUMED')
-
-	elseif op == DESCRIPTION then
+	if op == DESCRIPTION then
 
 		if d.mode == self._mode then
 			connection:_prepare(d.secret_key, self)
@@ -117,10 +79,6 @@ function VoiceSocket:handlePayload(payload)
 			self:disconnect()
 		end
 
-	elseif op == HEARTBEAT_ACK then
-
-		manager:emit('heartbeat', nil, self._sw.milliseconds) -- TODO: id
-
 	elseif op == SPEAKING then
 
 		local voiceUser = map:get(d.user_id)
@@ -130,6 +88,12 @@ function VoiceSocket:handlePayload(payload)
 		end
 
 		voiceUser._audioSSRC = d.ssrc or voiceUser._audioSSRC
+
+	elseif op == CHANNEL_USERS then
+
+		for _, user_id in ipairs(d.user_ids) do
+			map:_insert({ user_id = user_id })
+		end
 
 	elseif op == NEW_CLIENT_CONNECT then
 
@@ -159,10 +123,16 @@ function VoiceSocket:handlePayload(payload)
 			self:warning('User %s platform changed but not found in map', d.user_id)
 		end
 
-	elseif op then
+	else
 
-		self:warning('Unhandled WebSocket payload OP %i', op)
+		return originalHandlePayload(self, payload)
 
+	end
+
+	self:debug('WebSocket OP %s', op)
+
+	if payload.seq then
+		self._seq_ack = payload.seq
 	end
 
 end
@@ -172,28 +142,33 @@ end
 ---@param server_port number The server port.
 ---@return uv_udp_send_t|nil send The UDP send handle.
 function VoiceSocket:handshake(server_ip, server_port)
+
 	local udp = uv.new_udp()
 	self._udp = udp
 	self._ip = server_ip
 	self._port = server_port
 
-	udp:recv_start(function(err, data)
+	udp:recv_start(function(err, packet)
+		assert(not err, err)
+
 		if not self._handshaked then
 			-- handshake
-			assert(not err, err)
 			self._handshaked = true
-			local client_ip = unpack("xxxxxxxxz", data)
-			local client_port = unpack("<I2", data, -2)
+
+			local client_ip = unpack("xxxxxxxxz", packet)
+			local client_port = unpack("<I2", packet, -2)
 			return wrap(self.selectProtocol)(self, client_ip, client_port)
 		else
-			-- voice data
-			assert(not err, err)
 
-			if not data then
+			if not packet then
 				return
 			end
 
-			return wrap(self._connection.onUDPPacket)(self._connection, data)
+			if unpack('>I1', packet, 2) ~= 0x78 then -- payload_type == 0x78 (Opus audio packet)
+				return
+			end
+
+			return wrap(self._connection.onAudioPacket)(self._connection, packet)
 		end
 	end)
 
@@ -201,6 +176,7 @@ function VoiceSocket:handshake(server_ip, server_port)
 	return udp:send(packet, server_ip, server_port, function(err)
 		assert(not err, err)
 	end)
+
 end
 
 return VoiceSocket

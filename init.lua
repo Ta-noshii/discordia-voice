@@ -1,6 +1,11 @@
 local discordia = require("discordia")
 local enums = require("enums")
 
+require("voice/VoiceSocket")
+require("voice/VoiceConnection")
+require("containers/VoiceUserMap")
+require("containers/VoiceUser")
+
 do
 	local discordiaEnums = discordia.enums
 	local enum = discordiaEnums.enum
@@ -19,4 +24,4 @@ do
 	end
 end
 
-return discordia.voice
+return discordia
